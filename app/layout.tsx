@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import AestheticBadge from '@/components/layout/AestheticBadge'
+import ThemeWatcher from '@/components/ThemeWatcher'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
@@ -16,8 +16,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         <ThemeScript />
+        <ThemeWatcher />
         {children}
-        <AestheticBadge />
       </body>
     </html>
   )

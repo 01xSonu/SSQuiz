@@ -38,7 +38,13 @@ export const useAppStore = create<AppState>()(
         set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) })),
 
       toggleTheme: () =>
-        set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
+        set((state) => {
+          const next = state.theme === 'light' ? 'dark' : 'light'
+          if (typeof document !== 'undefined') {
+            document.documentElement.classList.toggle('dark', next === 'dark')
+          }
+          return { theme: next }
+        }),
     }),
     { name: 'ssquiz-store', partialize: (s) => ({ theme: s.theme }) }
   )

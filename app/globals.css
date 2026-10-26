@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* ─── Tailwind v4 Class-based Dark Mode ─────────────────── */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ─── Light Mode Variables ──────────────────────────────── */
 :root {
   --background: #f8fafc;
