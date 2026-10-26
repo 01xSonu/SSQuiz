@@ -25,8 +25,9 @@ export default function BottomNav() {
             <Link
               key={href}
               href={href}
+              prefetch={true}
               className={cn(
-                'flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200',
+                'flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-100 select-none touch-manipulation active:scale-90 active:opacity-70',
                 active
                   ? 'text-indigo-600 dark:text-indigo-400'
                   : 'text-gray-400 dark:text-gray-500 hover:text-indigo-500'

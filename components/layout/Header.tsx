@@ -46,7 +46,8 @@ export default function Header({ title = 'Dashboard', isAdmin = false }: HeaderP
         {isAdmin && (
           <Link
             href="/admin"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200/80 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 dark:hover:bg-indigo-900/60 transition-colors shadow-sm"
+            prefetch={true}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200/80 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 dark:hover:bg-indigo-900/60 transition-colors shadow-sm touch-manipulation active:scale-95"
             title="Open Admin Management Portal"
           >
             <ShieldCheck size={14} className="text-indigo-600 dark:text-indigo-400" />

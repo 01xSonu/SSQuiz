@@ -43,3 +43,18 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* ─── Instant Tap Response on Mobile & Tablet ─────────── */
+*, *::before, *::after {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, button, a, input, select, textarea, [role="button"] {
+  touch-action: manipulation;
+}
+
+button:active, a:active {
+  transform: scale(0.98);
+  transition-duration: 75ms;
+}
+
