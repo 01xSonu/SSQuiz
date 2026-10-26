@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import AdminClient from './AdminClient'
+import { isAdminUser } from '@/lib/auth/isAdmin'
 import type { Subject, Test } from '@/types'
 
 export default async function AdminPage() {
@@ -9,9 +10,8 @@ export default async function AdminPage() {
 
   if (!user) redirect('/login')
 
-  // Optional: If ADMIN_EMAIL is set in .env.local, restrict to that email
-  const adminEmail = process.env.ADMIN_EMAIL
-  if (adminEmail && user.email !== adminEmail) {
+  // Check admin authorization via helper (matches sonukr99770@gmail.com and ADMIN_EMAIL)
+  if (!isAdminUser(user.email)) {
     redirect('/dashboard')
   }
 

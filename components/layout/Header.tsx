@@ -1,15 +1,17 @@
 'use client'
 
-import { Bell, Moon, Sun, LogOut } from 'lucide-react'
+import { Bell, Moon, Sun, LogOut, ShieldCheck } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 interface HeaderProps {
   title?: string
+  isAdmin?: boolean
 }
 
-export default function Header({ title = 'Dashboard' }: HeaderProps) {
+export default function Header({ title = 'Dashboard', isAdmin = false }: HeaderProps) {
   const router = useRouter()
   const { theme, toggleTheme, setProfile } = useAppStore()
 
@@ -40,6 +42,18 @@ export default function Header({ title = 'Dashboard' }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Admin Portal Button — visible across Mobile, Tablet, and Desktop */}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200/80 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 dark:hover:bg-indigo-900/60 transition-colors shadow-sm"
+            title="Open Admin Management Portal"
+          >
+            <ShieldCheck size={14} className="text-indigo-600 dark:text-indigo-400" />
+            <span>Admin</span>
+          </Link>
+        )}
+
         <button
           onClick={toggleTheme}
           className="p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

@@ -5,7 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import type { Profile, UserBadge } from '@/types'
 import { getLevelInfo } from '@/types'
 import { useRouter } from 'next/navigation'
-import { Save, LogOut } from 'lucide-react'
+import Link from 'next/link'
+import { Save, LogOut, ShieldCheck } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 
 interface ProfileClientProps {
@@ -13,9 +14,10 @@ interface ProfileClientProps {
   badges: UserBadge[]
   userId: string
   email: string
+  isAdmin?: boolean
 }
 
-export default function ProfileClient({ profile, badges, userId, email }: ProfileClientProps) {
+export default function ProfileClient({ profile, badges, userId, email, isAdmin = false }: ProfileClientProps) {
   const router = useRouter()
   const supabase = createClient()
   const setProfile = useAppStore((s) => s.setProfile)
@@ -140,6 +142,27 @@ export default function ProfileClient({ profile, badges, userId, email }: Profil
           </div>
         )}
       </div>
+
+      {/* Admin Quick Action (if Admin) */}
+      {isAdmin && (
+        <div className="rounded-2xl border border-indigo-200 dark:border-indigo-800/80 bg-gradient-to-r from-indigo-50/70 via-purple-50/40 to-indigo-50/70 dark:from-indigo-950/40 dark:via-purple-950/20 dark:to-indigo-950/40 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20">
+              <ShieldCheck size={22} />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-gray-900 dark:text-white">Admin Privileges Active</h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">You have full access to create & manage test papers</p>
+            </div>
+          </div>
+          <Link
+            href="/admin"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/25 flex-shrink-0"
+          >
+            Open Admin Portal →
+          </Link>
+        </div>
+      )}
 
       {/* Account Session / Logout */}
       <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
