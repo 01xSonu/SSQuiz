@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Plus, Trash2, BookOpen, Clock, HelpCircle, Check } from 'lucide-react'
+import { X, Plus, Trash2, BookOpen, Clock, HelpCircle, Check, Lock, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Subject } from '@/types'
 
@@ -33,6 +33,8 @@ export default function CreateTestModal({ subjects, onClose, onCreated }: Create
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const [mode, setMode] = useState<'timed' | 'instant' | 'mock'>('timed')
   const [durationMin, setDurationMin] = useState(15)
+  // Anti-cheating lock: defaulted to TRUE so uploaded papers cannot be accessed until unlocked
+  const [isLocked, setIsLocked] = useState(true)
 
   // Questions array
   const [questions, setQuestions] = useState<QuestionDraft[]>([
@@ -93,20 +95,32 @@ export default function CreateTestModal({ subjects, onClose, onCreated }: Create
 
     try {
       // 1. Insert test
-      const { data: testData, error: testErr } = await supabase
+      const testPayload: Record<string, any> = {
+        title: title.trim(),
+        description: description.trim() || null,
+        subject_id: subjectId || null,
+        difficulty,
+        mode,
+        duration_min: Number(durationMin),
+        total_marks: questions.length,
+        is_published: true,
+        is_locked: isLocked,
+      }
+
+      let { data: testData, error: testErr } = await supabase
         .from('tests')
-        .insert({
-          title: title.trim(),
-          description: description.trim() || null,
-          subject_id: subjectId || null,
-          difficulty,
-          mode,
-          duration_min: Number(durationMin),
-          total_marks: questions.length,
-          is_published: true,
-        })
+        .insert(testPayload)
         .select()
         .single()
+
+      // Graceful fallback if is_locked column is not yet applied via migration 004
+      if (testErr && (testErr.message?.includes('is_locked') || (testErr as any).code === '42703')) {
+        delete testPayload.is_locked
+        testPayload.is_published = !isLocked
+        const fallbackRes = await supabase.from('tests').insert(testPayload).select().single()
+        testData = fallbackRes.data
+        testErr = fallbackRes.error
+      }
 
       if (testErr || !testData) throw testErr || new Error('Failed to create test')
 
@@ -263,6 +277,27 @@ export default function CreateTestModal({ subjects, onClose, onCreated }: Create
                 />
               </div>
             </div>
+
+            {/* Anti-Cheating Lock Setting */}
+            <div className="p-3.5 rounded-2xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-950/20">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isLocked}
+                  onChange={(e) => setIsLocked(e.target.checked)}
+                  className="mt-1 w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 cursor-pointer"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-amber-900 dark:text-amber-300">
+                    <Lock size={13} className="text-amber-600 dark:text-amber-400" />
+                    <span>Upload as Locked (Anti-Cheating Mode — Recommended)</span>
+                  </div>
+                  <p className="text-[11px] text-amber-800/80 dark:text-amber-400/80 mt-0.5 leading-relaxed">
+                    When enabled, questions and answers are strictly protected. Students cannot open or take the test until you click &quot;Unlock Test&quot; in the Admin portal when the exam starts.
+                  </p>
+                </div>
+              </label>
+            </div>
           </div>
 
           {/* Questions Section */}
@@ -374,7 +409,11 @@ export default function CreateTestModal({ subjects, onClose, onCreated }: Create
               disabled={loading}
               className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-colors shadow-lg shadow-indigo-500/25 disabled:opacity-60 flex items-center gap-2"
             >
-              {loading ? 'Publishing...' : 'Publish Test Paper 🚀'}
+              {loading
+                ? 'Saving...'
+                : isLocked
+                ? 'Save Locked Paper 🔒'
+                : 'Publish Live Test 🚀'}
             </button>
           </div>
         </form>

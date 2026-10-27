@@ -3,9 +3,9 @@ import { redirect } from 'next/navigation'
 import StatsCard from '@/components/dashboard/StatsCard'
 import StreakWidget from '@/components/dashboard/StreakWidget'
 import GoalProgressBar from '@/components/dashboard/GoalProgressBar'
-import { getLevelInfo } from '@/types'
+import { getLevelInfo, isTestLocked, type Test } from '@/types'
 import Link from 'next/link'
-import { ArrowRight, BookOpen, ClipboardList } from 'lucide-react'
+import { ArrowRight, BookOpen, ClipboardList, Lock } from 'lucide-react'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -31,7 +31,8 @@ export default async function DashboardPage() {
     .from('tests')
     .select('*, subjects(name, icon, color)')
     .eq('is_published', true)
-    .limit(4)
+    .order('created_at', { ascending: false })
+    .limit(6)
 
   return (
     <div className="space-y-6">
@@ -129,32 +130,51 @@ export default async function DashboardPage() {
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {(recentTests.data || []).map((test) => (
-            <Link
-              key={test.id}
-              href={`/tests/${test.id}`}
-              className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-indigo-200 dark:hover:border-indigo-700 hover:shadow-sm transition-all group"
-            >
-              <span
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                style={{ backgroundColor: test.subjects?.color + '22' }}
+          {(recentTests.data || []).map((test) => {
+            const locked = isTestLocked(test)
+            return (
+              <Link
+                key={test.id}
+                href={`/tests/${test.id}`}
+                className={`flex items-center gap-3 p-3 rounded-xl border transition-all group ${
+                  locked
+                    ? 'border-amber-200/70 dark:border-amber-900/30 bg-amber-50/20 dark:bg-amber-950/10 hover:border-amber-400'
+                    : 'border-gray-100 dark:border-gray-800 hover:border-indigo-200 dark:hover:border-indigo-700 hover:shadow-sm'
+                }`}
               >
-                {test.subjects?.icon || '📚'}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-                  {test.title}
-                </p>
-                <p className="text-xs text-gray-400">{test.subjects?.name} • {test.duration_min}min</p>
-              </div>
-              <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium
-                ${test.difficulty === 'easy' ? 'bg-emerald-100 text-emerald-600' :
-                  test.difficulty === 'medium' ? 'bg-amber-100 text-amber-600' :
-                  'bg-red-100 text-red-600'}`}>
-                {test.difficulty}
-              </span>
-            </Link>
-          ))}
+                <span
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                  style={{ backgroundColor: (test.subjects?.color || '#6366f1') + '22' }}
+                >
+                  {test.subjects?.icon || '📚'}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                      {test.title}
+                    </p>
+                    {locked && (
+                      <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.2 rounded-full font-bold uppercase bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400">
+                        <Lock size={9} /> Locked
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-400">{test.subjects?.name} • {test.duration_min}min</p>
+                </div>
+                <span
+                  className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                    test.difficulty === 'easy'
+                      ? 'bg-emerald-100 text-emerald-600'
+                      : test.difficulty === 'medium'
+                      ? 'bg-amber-100 text-amber-600'
+                      : 'bg-red-100 text-red-600'
+                  }`}
+                >
+                  {test.difficulty}
+                </span>
+              </Link>
+            )
+          })}
         </div>
       </div>
     </div>

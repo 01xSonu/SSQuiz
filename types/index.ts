@@ -35,9 +35,24 @@ export interface Test {
   total_marks: number
   topic: string | null
   is_published: boolean
+  is_locked?: boolean
   created_at: string
   subjects?: Subject
   questions?: Question[]
+}
+
+/**
+ * Determines whether a test paper is locked for regular students.
+ * Defaults to true if newly created or explicitly set to locked.
+ * Supports fallback to !is_published before migration 004 is applied.
+ */
+export function isTestLocked(test?: { is_locked?: boolean | null; is_published?: boolean | null } | null): boolean {
+  if (!test) return false
+  if (typeof test.is_locked === 'boolean') {
+    return test.is_locked
+  }
+  // Fallback before migration 004 is applied to database:
+  return test.is_published === false
 }
 
 export interface Question {

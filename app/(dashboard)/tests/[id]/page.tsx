@@ -1,9 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import TestInterface from './TestInterface'
+import LockedScreen from './LockedScreen'
+import AdminTestBanner from './AdminTestBanner'
 import { Clock, BookOpen } from 'lucide-react'
 import Link from 'next/link'
 import { getDifficultyColor } from '@/lib/utils'
+import { isAdminUser } from '@/lib/auth/isAdmin'
+import { isTestLocked, type Test, type Question } from '@/types'
 
 export default async function TestPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -11,18 +15,46 @@ export default async function TestPage({ params }: { params: Promise<{ id: strin
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [testRes, questionsRes] = await Promise.all([
-    supabase.from('tests').select('*, subjects(name, icon, color)').eq('id', id).single(),
-    supabase.from('questions').select('*').eq('test_id', id).order('order_num'),
-  ])
+  const isAdmin = isAdminUser(user.email)
 
-  if (!testRes.data) notFound()
+  // 1. Fetch test details
+  const { data: testData } = await supabase
+    .from('tests')
+    .select('*, subjects(name, icon, color)')
+    .eq('id', id)
+    .single()
 
-  const test = testRes.data
-  const questions = questionsRes.data || []
+  if (!testData) notFound()
+
+  const test = testData as Test
+  const isLocked = isTestLocked(test)
+
+  // 2. Anti-cheating security check:
+  // If the test is locked AND the user is NOT an admin, NEVER fetch or expose questions
+  if (isLocked && !isAdmin) {
+    const countRes = await supabase
+      .from('questions')
+      .select('id', { count: 'exact', head: true })
+      .eq('test_id', id)
+
+    const questionCount = countRes.count || test.total_marks || 0
+    return <LockedScreen test={test} questionCount={questionCount} />
+  }
+
+  // 3. User is authorized (either test is unlocked, or user is an admin)
+  const questionsRes = await supabase
+    .from('questions')
+    .select('*')
+    .eq('test_id', id)
+    .order('order_num')
+
+  const questions = (questionsRes.data || []) as Question[]
 
   return (
     <div>
+      {/* Admin security control bar */}
+      {isAdmin && <AdminTestBanner test={test} />}
+
       <div className="mb-6">
         <Link href="/tests" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
           ← Back to Tests
